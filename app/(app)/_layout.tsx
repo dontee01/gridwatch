@@ -1,12 +1,14 @@
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Slot, Tabs } from "expo-router";
 
+import { useIncidentSync } from "@/features/incidents/useIncidentSync";
 import { colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/context/AuthContext";
 
 export default function AppLayout() {
+  useIncidentSync();
   const { authenticated, loading } = useAuth();
 
   if (loading) {
@@ -85,6 +87,12 @@ export default function AppLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="incidents/[id]"
+        options={{
+          href: null,
+        }}
+      />
 
       <Tabs.Screen
         name="profile"
@@ -95,6 +103,8 @@ export default function AppLayout() {
           ),
         }}
       />
+
+      <Slot />
     </Tabs>
   );
 }

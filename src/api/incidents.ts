@@ -42,6 +42,8 @@ export interface Incident {
   createdAt: string;
   updatedAt: string;
 
+  // mediaReferences?: string[];
+
   media?: {
     id: string;
     reference: string;
@@ -53,6 +55,7 @@ export interface Incident {
 }
 
 export interface CreateIncidentPayload {
+  localId: string;
   title: string;
   description: string;
   category: IncidentCategory;
@@ -62,6 +65,7 @@ export interface CreateIncidentPayload {
   longitude?: number;
   address?: string;
   wardId?: string;
+  mediaReferences?: string[];
 }
 
 export async function createIncident(payload: CreateIncidentPayload) {
