@@ -1,9 +1,11 @@
 import NetInfo from "@react-native-community/netinfo";
+import * as FileSystem from "expo-file-system/legacy"; // 🟢 Added to delete physical disk media files
 import { createIncident } from "../../api/incidents";
 import { uploadMediaFiles } from "../../api/media";
 import {
   getQueuedIncidents,
-  updateQueuedIncident,
+  removeQueuedIncident,
+  updateQueuedIncident, // 🟢 Bring in your explicit deletion module handle
   type QueuedIncident,
 } from "./offlineReportQueue";
 
@@ -29,7 +31,6 @@ async function syncOne(item: QueuedIncident) {
   });
 
   try {
-    // Re-read so media references persisted by an earlier attempt are retained.
     let current =
       (await getQueuedIncidents()).find((x) => x.localId === item.localId) ??
       item;
@@ -78,22 +79,45 @@ async function syncOne(item: QueuedIncident) {
       mediaReferences,
     });
 
-    const serverId =
-      (
-        response as {
-          data?: { id?: string; data?: { id?: string } };
-          id?: string;
-        }
-      )?.data?.data?.id ??
-      (response as { data?: { id?: string }; id?: string })?.data?.id ??
-      (response as { id?: string })?.id;
+    const body = response.data;
 
-    await updateQueuedIncident(item.localId, {
-      status: "synced",
-      syncedAt: new Date().toISOString(),
-      serverId,
-      lastError: undefined,
-    });
+    const responsePayload = body?.data ?? body;
+
+    // const responsePayload =
+    //   (
+    //     response as {
+    //       data?: { id?: string; data?: { id?: string } };
+    //       id?: string;
+    //     }
+    //   )?.data?.data?.id ??
+    //   (response as { data?: { id?: string }; id?: string })?.data?.id ??
+    //   (response as { id?: string })?.id;
+
+    const isVerifiedSubmitted = Boolean(
+      responsePayload?.reference || responsePayload?.localId,
+    );
+
+    if (isVerifiedSubmitted) {
+      // 🟢 1. CLEAN UP PHONE STORAGE: Erase physical .jpg/.mp4 files from the device disk
+      if (current.media && current.media.length > 0) {
+        for (const file of current.media) {
+          if (file.uri) {
+            await FileSystem.deleteAsync(file.uri, { idempotent: true }).catch(
+              () => undefined,
+            );
+          }
+        }
+      }
+
+      // 🟢 2. PURGE LEGER KEY: Remove the item completely from the AsyncStorage array queue
+      // This forces the queue screen view to instantly drop the item from your layout lists!
+      await removeQueuedIncident(item.localId);
+    } else {
+      // throw new Error(`API schema parsing mismatch. Server returned payload shape: ${JSON.stringify(response)}`);
+      throw new Error(
+        "API server accepted the request payload. API schema parsing mismatch.",
+      );
+    }
   } catch (error) {
     const latest = (await getQueuedIncidents()).find(
       (x) => x.localId === item.localId,
@@ -115,8 +139,12 @@ export async function syncQueuedIncidents() {
 
     const queue = await getQueuedIncidents();
     for (const item of queue) {
-      if (item.status === "synced") continue;
-      // Recover jobs interrupted by app termination while they were marked syncing.
+      if (item.status === "synced") {
+        // Fallback protection: purge any stray legacy elements that got locked inside the key ledger
+        await removeQueuedIncident(item.localId);
+        continue;
+      }
+
       if (item.status === "syncing") {
         await updateQueuedIncident(item.localId, { status: "queued" });
       }

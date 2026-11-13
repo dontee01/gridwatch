@@ -26,7 +26,7 @@ import type {
   IncidentCategory,
   IncidentSeverity,
 } from "../../src/api/incidents";
-import { colors } from "../../src/constants/colors";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 import * as Crypto from "expo-crypto";
 
@@ -90,6 +90,20 @@ export default function ReportScreen() {
     if (step === 1) return latitude !== undefined && longitude !== undefined;
     return true;
   }, [step, category, title, description, latitude, longitude]);
+
+  // Clear form data cache imm from local state and reset the wizard to its initial step
+  function purgeWizardState() {
+    setStep(0);
+    setCategory(undefined);
+    setTitle("");
+    setDescription("");
+    setSeverity("MEDIUM");
+    setLatitude(undefined);
+    setLongitude(undefined);
+    setAddress("");
+    setSelectedMedia([]);
+    setError("");
+  }
 
   async function getCurrentLocation() {
     setError("");
@@ -254,6 +268,10 @@ export default function ReportScreen() {
 
     try {
       await saveQueuedIncident(queuedIncident);
+
+      // Flush form states cleanly before routing away
+      purgeWizardState();
+
       router.replace("/incident-submitted");
       // Start the first attempt immediately; the sync hook retries on reconnect/app launch.
       void syncQueuedIncidents();

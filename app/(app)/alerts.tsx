@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../../src/constants/colors";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 export default function AlertsScreen() {
   return (

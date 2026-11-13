@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-
 import {
   ActivityIndicator,
+  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -9,14 +11,11 @@ import {
   Text,
   View,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
-
-import { router, useLocalSearchParams } from "expo-router";
-
-import { colors } from "../../../src/constants/colors";
-
 import { getIncident, Incident } from "../../../src/api/incidents";
+import { colors } from "../../../src/features/incidents/constants/colors";
+import { MEDIA_URL } from "../../../src/features/incidents/constants/config"; // 🟢 Ensure API_URL (https://converza.live) is imported
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 function formatCategory(category: string) {
   return category
@@ -28,39 +27,47 @@ function formatDate(value?: string | null) {
   if (!value) {
     return "Unknown";
   }
-
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) {
     return "Unknown";
   }
-
   return date.toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });
 }
 
+/**
+ * 🟢 NEW: Resolves the physical media asset endpoint.
+ * Converts raw filenames or relative records into valid absolute HTTPS routes.
+ */
+function resolveMediaUrl(rawUrl: string): string {
+  if (!rawUrl) return "";
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+    return rawUrl;
+  }
+  // Strip out any accidental leading slashes or duplications
+  const cleanPath = rawUrl.startsWith("/") ? rawUrl.substring(1) : rawUrl;
+
+  // If the string is just the bare filename, point it natively at the Nginx static route mapping
+  if (!cleanPath.includes("uploads/")) {
+    return `${MEDIA_URL}/uploads/${cleanPath}`;
+  }
+  return `${MEDIA_URL}/${cleanPath}`;
+}
+
 export default function IncidentDetailScreen() {
-  const { id } = useLocalSearchParams<{
-    id: string;
-  }>();
-
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [incident, setIncident] = useState<Incident>();
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-
         const response = await getIncident(id);
-
         const data = response?.data ?? response;
-
         setIncident(data);
       } catch (error: any) {
         setError(
@@ -70,7 +77,6 @@ export default function IncidentDetailScreen() {
         setLoading(false);
       }
     }
-
     if (id) {
       load();
     }
@@ -88,11 +94,8 @@ export default function IncidentDetailScreen() {
     return (
       <View style={styles.center}>
         <Ionicons name="alert-circle-outline" size={45} color={colors.danger} />
-
         <Text style={styles.errorTitle}>Unable to load incident</Text>
-
         <Text style={styles.errorText}>{error}</Text>
-
         <Pressable style={styles.backHome} onPress={() => router.back()}>
           <Text style={styles.backHomeText}>GO BACK</Text>
         </Pressable>
@@ -112,9 +115,7 @@ export default function IncidentDetailScreen() {
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={21} color={colors.white} />
           </Pressable>
-
           <Text style={styles.headerTitle}>Incident</Text>
-
           <View style={styles.headerSpacer} />
         </View>
 
@@ -130,7 +131,8 @@ export default function IncidentDetailScreen() {
                 <Image
                   key={media.id}
                   source={{
-                    uri: media.url,
+                    // 🟢 FIXED: Wrapped the raw URL tracker in the resolver sanitizer engine
+                    uri: resolveMediaUrl(media.url),
                   }}
                   style={styles.mediaImage}
                 />
@@ -144,7 +146,6 @@ export default function IncidentDetailScreen() {
               size={42}
               color={colors.textSecondary}
             />
-
             <Text style={styles.noMediaText}>No media attached</Text>
           </View>
         )}
@@ -170,7 +171,6 @@ export default function IncidentDetailScreen() {
                 },
               ]}
             />
-
             <Text
               style={[
                 styles.statusText,
@@ -185,7 +185,6 @@ export default function IncidentDetailScreen() {
         </View>
 
         <Text style={styles.title}>{incident.title}</Text>
-
         <Text style={styles.description}>{incident.description}</Text>
 
         <View style={styles.infoCard}>
@@ -194,19 +193,16 @@ export default function IncidentDetailScreen() {
             label="Severity"
             value={incident.severity}
           />
-
           <InfoRow
             icon="time-outline"
             label="Reported"
             value={formatDate(incident.createdAt)}
           />
-
           <InfoRow
             icon="location-outline"
             label="Location"
             value={incident.address ?? "Location coordinates available"}
           />
-
           {incident.reference ? (
             <InfoRow
               icon="finger-print-outline"
@@ -223,7 +219,6 @@ export default function IncidentDetailScreen() {
             size={20}
             color={verified ? colors.success : colors.warning}
           />
-
           <Text style={styles.noticeText}>
             {verified
               ? "This incident has been reviewed and verified by GridWatch."
@@ -251,10 +246,8 @@ function InfoRow({
       <View style={styles.infoIcon}>
         <Ionicons name={icon} size={17} color={colors.textSecondary} />
       </View>
-
       <View style={styles.infoContent}>
         <Text style={styles.infoLabel}>{label}</Text>
-
         <Text style={styles.infoValue}>{value}</Text>
       </View>
     </View>
@@ -266,11 +259,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-
   content: {
     paddingBottom: 35,
   },
-
   header: {
     paddingHorizontal: 20,
     paddingTop: 18,
@@ -278,7 +269,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
   backButton: {
     width: 42,
     height: 42,
@@ -287,7 +277,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   headerTitle: {
     flex: 1,
     color: colors.white,
@@ -296,21 +285,17 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginRight: 42,
   },
-
   headerSpacer: {
     width: 0,
   },
-
   mediaScroller: {
     height: 235,
   },
-
   mediaImage: {
-    width: 400,
+    width: SCREEN_WIDTH, // 🟢 FIXED: Dynamic phone width sizing instead of hardcoded 400px
     height: 235,
     resizeMode: "cover",
   },
-
   placeholderMedia: {
     height: 210,
     marginHorizontal: 20,
@@ -321,13 +306,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   noMediaText: {
     color: colors.textSecondary,
     fontSize: 11,
     marginTop: 7,
   },
-
   categoryRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -335,20 +318,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 18,
   },
-
   categoryBadge: {
     backgroundColor: "#201A3A",
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 7,
   },
-
   categoryText: {
     color: colors.primary,
     fontSize: 8,
     fontWeight: "900",
   },
-
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -357,26 +337,21 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 7,
   },
-
   verifiedBadge: {
     backgroundColor: "#102A25",
   },
-
   pendingBadge: {
     backgroundColor: "#332A18",
   },
-
   statusDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
   },
-
   statusText: {
     fontSize: 8,
     fontWeight: "900",
   },
-
   title: {
     color: colors.white,
     fontSize: 25,
@@ -385,7 +360,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 12,
   },
-
   description: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -393,7 +367,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 9,
   },
-
   infoCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -403,18 +376,15 @@ const styles = StyleSheet.create({
     marginTop: 22,
     paddingHorizontal: 14,
   },
-
   infoRow: {
     minHeight: 66,
     flexDirection: "row",
     alignItems: "center",
   },
-
   infoRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-
   infoIcon: {
     width: 38,
     height: 38,
@@ -423,25 +393,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   infoContent: {
     flex: 1,
     marginLeft: 11,
   },
-
   infoLabel: {
     color: colors.textSecondary,
     fontSize: 9,
     fontWeight: "700",
   },
-
   infoValue: {
     color: colors.white,
     fontSize: 12,
     fontWeight: "600",
     marginTop: 3,
   },
-
   notice: {
     marginHorizontal: 20,
     marginTop: 14,
@@ -453,14 +419,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
   },
-
   noticeText: {
     flex: 1,
     color: colors.textSecondary,
     fontSize: 10,
     lineHeight: 16,
   },
-
   center: {
     flex: 1,
     backgroundColor: colors.background,
@@ -468,21 +432,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 25,
   },
-
   errorTitle: {
     color: colors.white,
     fontSize: 17,
     fontWeight: "800",
     marginTop: 12,
   },
-
   errorText: {
     color: colors.textSecondary,
     fontSize: 12,
     textAlign: "center",
     marginTop: 5,
   },
-
   backHome: {
     backgroundColor: colors.primary,
     borderRadius: 12,
@@ -490,7 +451,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 18,
   },
-
   backHomeText: {
     color: colors.white,
     fontSize: 10,

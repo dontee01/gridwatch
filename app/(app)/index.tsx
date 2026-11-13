@@ -3,8 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-import { colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/context/AuthContext";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 const nearbyIncidents = [
   {

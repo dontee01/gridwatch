@@ -3,21 +3,21 @@ import NetInfo from "@react-native-community/netinfo";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import {
-  getQueuedIncidents,
-  type QueuedIncident,
+    getQueuedIncidents,
+    type QueuedIncident,
 } from "@/features/incidents/offlineReportQueue";
 import { syncQueuedIncidents } from "@/features/incidents/syncQueuedIncidents";
-import { colors } from "../../src/constants/colors";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 const statusCopy: Record<
   QueuedIncident["status"],

@@ -1,22 +1,22 @@
 import { useState } from "react";
 
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-import { colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/context/AuthContext";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 export default function RegisterScreen() {
   const { register } = useAuth();

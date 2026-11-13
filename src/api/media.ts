@@ -51,7 +51,7 @@ export async function uploadMedia(file: LocalMediaFile): Promise<string> {
   // const reference = response.data?.data?.reference;
 
   if (!reference) {
-    console.log("Unexpected media upload response:", body);
+    console.error("Unexpected media upload response:", body);
     throw new Error(
       "Media upload succeeded, but the response did not contain a reference.",
     );

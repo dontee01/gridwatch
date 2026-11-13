@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-import { API_URL } from "../constants/config";
+import { API_URL } from "../features/incidents/constants/config";
 
 import {
   clearTokens,

@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { router, useFocusEffect } from "expo-router";
 
-import { colors } from "../../src/constants/colors";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 import {
   getIncidents,

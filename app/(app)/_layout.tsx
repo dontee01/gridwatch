@@ -4,8 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Slot, Tabs } from "expo-router";
 
 import { useIncidentSync } from "@/features/incidents/useIncidentSync";
-import { colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/context/AuthContext";
+import { colors } from "../../src/features/incidents/constants/colors";
 
 export default function AppLayout() {
   useIncidentSync();
